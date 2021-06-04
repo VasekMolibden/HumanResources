@@ -1,12 +1,12 @@
 ﻿@model HumanResources.Models.Department
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Добавить";
 }
 
-<h1>Create</h1>
+<h1>Добавить</h1>
 
-<h4>Department</h4>
+<h4>Отдел</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -27,14 +27,14 @@
                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Добавить" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Вернуться к полному списку</a>
 </div>
 
 @section Scripts {

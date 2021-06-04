@@ -1,4 +1,4 @@
-﻿@model IEnumerable<HumanResources.Models.Employee>
+﻿@model PaginatedList<HumanResources.Models.Employee>
 
 @{
     ViewData["Title"] = "Сотрудники";
@@ -9,57 +9,91 @@
 <p>
     <a asp-action="Create">Добавить</a>
 </p>
+
+<form asp-action="Index" method="get">
+    <div class="form-actions no-color">
+        <p>
+            Поиск: <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" />
+            <input type="submit" value="Поиск" class="btn btn-default" /> |
+            <a asp-action="Index">Вернуться к полному списку</a>
+        </p>
+    </div>
+</form>
+
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Name)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">ФИО</a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.DateOfEmployment)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Дата трудоустройства</a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.PhoneNumber)
+                Номер телефона
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.DateOfBirth)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["DOBSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Дата рождения</a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Department)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["DepartmentSortParm"]"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]">Отдел</a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Position)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["PositionSortParm"]"
+                   asp-route-currentFilter="@ViewData["CurrentFilter"]">Должность</a>
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateOfEmployment)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PhoneNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateOfBirth)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Department.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Position.Title)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ID">Редактировать</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Подробнее</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Удалить</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateOfEmployment)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.PhoneNumber)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateOfBirth)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Department.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Position.Title)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.ID">Редактировать</a> |
+                    <a asp-action="Details" asp-route-id="@item.ID">Подробнее</a> |
+                    <a asp-action="Delete" asp-route-id="@item.ID">Удалить</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+
+@{
+    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+}
+
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-pageNumber="@(Model.PageIndex - 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-default @prevDisabled">
+    Предыдущая
+</a>
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-pageNumber="@(Model.PageIndex + 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-default @nextDisabled">
+    Следующая
+</a>

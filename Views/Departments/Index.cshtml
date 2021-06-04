@@ -1,4 +1,4 @@
-﻿@model IEnumerable<HumanResources.Models.Department>
+﻿@model PaginatedList<HumanResources.Models.Department>
 
 @{
     ViewData["Title"] = "Отделы";
@@ -9,39 +9,71 @@
 <p>
     <a asp-action="Create">Добавить</a>
 </p>
+
+<form asp-action="Index" method="get">
+    <div class="form-actions no-color">
+        <p>
+            Поиск: <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" />
+            <input type="submit" value="Поиск" class="btn btn-default" /> |
+            <a asp-action="Index">Вернуться к полному списку</a>
+        </p>
+    </div>
+</form>
+
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Name)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Наименование</a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.PhoneNumber)
+                Номер телефона
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Employee)
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["EmployeeSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Глава отдела</a>
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PhoneNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Employee.Name)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.DepartmentID">Редактировать</a> |
-                <a asp-action="Details" asp-route-id="@item.DepartmentID">Подробнее</a> |
-                <a asp-action="Delete" asp-route-id="@item.DepartmentID">Удалить</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.PhoneNumber)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Employee.Name)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.DepartmentID">Редактировать</a> |
+                    <a asp-action="Details" asp-route-id="@item.DepartmentID">Подробнее</a> |
+                    <a asp-action="Delete" asp-route-id="@item.DepartmentID">Удалить</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+
+@{
+    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+}
+
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-pageNumber="@(Model.PageIndex - 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-default @prevDisabled">
+    Предыдущая
+</a>
+<a asp-action="Index"
+   asp-route-sortOrder="@ViewData["CurrentSort"]"
+   asp-route-pageNumber="@(Model.PageIndex + 1)"
+   asp-route-currentFilter="@ViewData["CurrentFilter"]"
+   class="btn btn-default @nextDisabled">
+    Следующая
+</a>

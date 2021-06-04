@@ -20,9 +20,51 @@ namespace HumanResources.Controllers
         }
 
         // GET: Positions
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+                    string sortOrder,
+                    string currentFilter,
+                    string searchString,
+                    int? pageNumber)
         {
-            return View(await _context.Positions.ToListAsync());
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["TitleSortParm"] = String.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            ViewData["SalarySortParm"] = sortOrder == "Salary" ? "salary_desc" : "Salary";
+
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            var positions = from p in _context.Positions
+                           select p;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                positions = positions.Where(p => p.Title.Contains(searchString));
+            }
+            switch (sortOrder)
+            {
+                case "title_desc":
+                    positions = positions.OrderByDescending(p => p.Title);
+                    break;
+                case "Salary":
+                    positions = positions.OrderBy(p => p.Salary);
+                    break;
+                case "salary_desc":
+                    positions = positions.OrderByDescending(p => p.Salary);
+                    break;
+                default:
+                    positions = positions.OrderBy(p => p.Title);
+                    break;
+            }
+
+            int pageSize = 5;
+            return View(await PaginatedList<Position>.CreateAsync(positions.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Positions/Details/5
@@ -56,11 +98,21 @@ namespace HumanResources.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("PositionID,Title,Salary")] Position position)
         {
-            if (ModelState.IsValid)
+            try
             {
-                _context.Add(position);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Add(position);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+            catch (DbUpdateException /* ex */)
+            {
+                //Log the error (uncomment ex variable name and write a log.
+                ModelState.AddModelError("", "Невозможно сохранить изменения. " +
+                    "Попробуйте еще раз, и если проблема не исчезнет " +
+                    "свяжитесь с системным администратором.");
             }
             return View(position);
         }
@@ -93,31 +145,30 @@ namespace HumanResources.Controllers
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            var positionToUpdate = await _context.Positions.FirstOrDefaultAsync(p => p.PositionID == id);
+            if (await TryUpdateModelAsync<Position>(
+                positionToUpdate,
+                "",
+                p => p.Title, p => p.Salary))
             {
                 try
                 {
-                    _context.Update(position);
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException /* ex */)
                 {
-                    if (!PositionExists(position.PositionID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    //Log the error (uncomment ex variable name and write a log.)
+                    ModelState.AddModelError("", "Невозможно сохранить изменения. " +
+                    "Попробуйте еще раз, и если проблема не исчезнет " +
+                    "свяжитесь с системным администратором.");
                 }
-                return RedirectToAction(nameof(Index));
             }
             return View(position);
         }
 
         // GET: Positions/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int? id, bool? saveChangesError = false)
         {
             if (id == null)
             {
@@ -131,6 +182,14 @@ namespace HumanResources.Controllers
                 return NotFound();
             }
 
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewData["ErrorMessage"] =
+                    "Удаление не удалось." +
+                    "Попробуйте еще раз, и если проблема не исчезнет " +
+                    "свяжитесь с системным администратором.";
+            }
+
             return View(position);
         }
 
@@ -140,9 +199,21 @@ namespace HumanResources.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var position = await _context.Positions.FindAsync(id);
-            _context.Positions.Remove(position);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            if (position == null)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            try
+            {
+                _context.Positions.Remove(position);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException /* ex */)
+            {
+                //Log the error (uncomment ex variable name and write a log.)
+                return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
+            }
         }
 
         private bool PositionExists(int id)

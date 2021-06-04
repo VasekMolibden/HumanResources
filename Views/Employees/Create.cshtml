@@ -1,12 +1,12 @@
 ﻿@model HumanResources.Models.Employee
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Добавить";
 }
 
-<h1>Create</h1>
+<h1>Добавить</h1>
 
-<h4>Employee</h4>
+<h4>Сотрудник</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -41,14 +41,14 @@
                 <select asp-for="DepartmentID" class ="form-control" asp-items="ViewBag.DepartmentID"></select>
             </div>
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <input type="submit" value="Добавить" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Вернуться к полному списку</a>
 </div>
 
 @section Scripts {

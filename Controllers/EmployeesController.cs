@@ -20,10 +20,74 @@ namespace HumanResources.Controllers
         }
 
         // GET: Employees
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+                    string sortOrder,
+                    string currentFilter,
+                    string searchString,
+                    int? pageNumber)
         {
-            var humanResourcesContext = _context.Employees.Include(e => e.Department).Include(e => e.Position);
-            return View(await humanResourcesContext.ToListAsync());
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            ViewData["DOBSortParm"] = sortOrder == "DOB" ? "dob_desc" : "DOB";
+            ViewData["PositionSortParm"] = sortOrder == "position" ? "position_desc" : "position";
+            ViewData["DepartmentSortParm"] = sortOrder == "department" ? "department_desc" : "department";
+
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            var employees = from e in _context.Employees.Include(p => p.Position).Include(d => d.Department)
+                            select e;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                employees = employees.Where(e => e.Name.Contains(searchString)
+                || e.Position.Title.Contains(searchString)
+                 || e.Department.Name.Contains(searchString));
+            }
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    employees = employees.OrderByDescending(e => e.Name);
+                    break;
+                case "Date":
+                    employees = employees.OrderBy(e => e.DateOfEmployment);
+                    break;
+                case "date_desc":
+                    employees = employees.OrderByDescending(e => e.DateOfEmployment);
+                    break;
+                case "DOB":
+                    employees = employees.OrderBy(e => e.DateOfBirth);
+                    break;
+                case "dob_desc":
+                    employees = employees.OrderByDescending(e => e.DateOfBirth);
+                    break;
+                case "position":
+                    employees = employees.OrderBy(e => e.Position.Title);
+                    break;
+                case "position_desc":
+                    employees = employees.OrderByDescending(e => e.Position.Title);
+                    break;
+                case "department":
+                    employees = employees.OrderBy(e => e.Department.Name);
+                    break;
+                case "department_desc":
+                    employees = employees.OrderByDescending(e => e.Department.Name);
+                    break;
+                default:
+                    employees = employees.OrderBy(e => e.Name);
+                    break;
+            }
+
+            int pageSize = 5;
+            return View(await PaginatedList<Employee>.CreateAsync(employees.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Employees/Details/5

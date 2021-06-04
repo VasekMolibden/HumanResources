@@ -20,10 +20,52 @@ namespace HumanResources.Controllers
         }
 
         // GET: Departments
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+                    string sortOrder,
+                    string currentFilter,
+                    string searchString,
+                    int? pageNumber)
         {
-            var humanResourcesContext = _context.Departments.Include(d => d.Employee);
-            return View(await humanResourcesContext.ToListAsync());
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["EmployeeSortParm"] = sortOrder == "employee" ? "employee_desc" : "employee";
+
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            var departments = from d in _context.Departments.Include(e => e.Employee)
+                            select d;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                departments = departments.Where(d => d.Name.Contains(searchString)
+                || d.Employee.Name.Contains(searchString));
+            }
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    departments = departments.OrderByDescending(d => d.Name);
+                    break;
+                case "employee":
+                    departments = departments.OrderBy(d => d.Employee.Name);
+                    break;
+                case "employee_desc":
+                    departments = departments.OrderByDescending(d => d.Employee.Name);
+                    break;
+                default:
+                    departments = departments.OrderBy(d => d.Name);
+                    break;
+            }
+
+            int pageSize = 5;
+            return View(await PaginatedList<Department>.CreateAsync(departments.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Departments/Details/5
